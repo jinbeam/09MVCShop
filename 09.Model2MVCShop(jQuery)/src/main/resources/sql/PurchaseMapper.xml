@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper
+		PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="PurchaseMapper">
+ 	
+ 	
+	<resultMap id="purchaseSelectMap" type="purchase">
+		<result property="buyer.userId" 	column="buyer_id"	jdbcType="VARCHAR"/>
+		<result property="divyAddr"	column="demailaddr" jdbcType="VARCHAR" />
+		<result property="divyRequest" 	column="dlvy_request" 	jdbcType="VARCHAR" />
+		<result property="divyDate" 	column="dlvy_date" 	jdbcType="DATE" />
+		<result property="orderDate"	column="order_data" jdbcType="DATE" />
+		<result property="paymentOption" 	column="payment_option" 	jdbcType="VARCHAR" />
+		<result property="purchaseProd.prodNo" 		column="prod_no" 	jdbcType="INTEGER" />
+		<result property="receiverName" 	column="receiver_name" 		jdbcType="VARCHAR" />
+		<result property="receiverPhone" column="receiver_phone" jdbcType="VARCHAR"/>
+		<result property="tranCode" column="tran_status_code" jdbcType="VARCHAR"/>
+		<result property="tranNo" column="tran_no" jdbcType="INTEGER"/>
+		<result property="evaluation" column="evaluation" jdbcType="INTEGER"/>
+	</resultMap>
+	
+	<!-- SQL : INSERT -->
+	<insert id="addPurchase"	parameterType="purchase" >
+	 	INSERT
+		INTO transaction( tran_no , prod_no, buyer_id, payment_option , receiver_name, receiver_phone, demailaddr, dlvy_request, tran_status_code, order_data, dlvy_date, evaluation) 
+		VALUES	 (	seq_transaction_tran_no.nextval, #{purchaseProd.prodNo:INTEGER} , 
+					#{buyer.userId:VARCHAR} , #{paymentOption:VARCHAR} , #{receiverName}, #{receiverPhone}, #{divyAddr:VARCHAR},
+					 #{divyRequest:VARCHAR}, 0, SYSDATE, #{divyDate}, 0  )
+	 </insert>
+	 
+	 <select id="getPurchase01" parameterType="int" resultMap="purchaseSelectMap">
+	 	SELECT tran_no , prod_no, buyer_id, payment_option , receiver_name, receiver_phone, demailaddr, dlvy_request, tran_status_code, order_data, dlvy_date, evaluation
+	 	FROM transaction
+	 	WHERE tran_no = #{value}
+	 </select>
+	 
+	 <select id="getPurchase02" parameterType="int" resultMap="purchaseSelectMap">
+	 	SELECT tran_no , prod_no, buyer_id, payment_option , receiver_name, receiver_phone, demailaddr, dlvy_request, tran_status_code, order_data, dlvy_date, evaluation
+	 	FROM transaction
+	 	WHERE prod_no = #{value}
+	 </select>
+	 
+	 <update id="updatePurchase" parameterType="purchase">
+	 	UPDATE transaction
+	 	SET payment_option=#{paymentOption}, receiver_name=#{receiverName}, receiver_phone=#{receiverPhone}, demailaddr=#{divyAddr}, dlvy_request=#{divyRequest}, dlvy_date=#{divyDate}
+	 	WHERE tran_no=#{tranNo}
+	 </update>
+	 
+	 <update id="updateTranCode" parameterType="purchase">
+	 	UPDATE transaction
+	 	SET tran_status_code=tran_status_code+1 
+	 	WHERE tran_no=#{tranNo}
+	 </update>
+	 
+	 <delete id="deletePurchase" parameterType="string">
+	 	DELETE FROM transaction
+	 	WHERE tran_no = #{tranNo}
+	 </delete>
+	 
+	 <update id="updateEvaluation" parameterType="purchase">
+	 	UPDATE transaction
+	 	SET evaluation=#{evaluation}
+	 	WHERE tran_no = #{tranNo}
+	 </update>
+	 
+	 <select  id="getPurchaseList"  parameterType="java.util.Map"	resultMap="purchaseSelectMap">
+	  	SELECT *
+	  	FROM (	SELECT inner_table.* , ROWNUM AS row_seq
+	  					FROM		(	SELECT tran_no , prod_no, buyer_id, payment_option , receiver_name, receiver_phone, demailaddr, 
+	  											dlvy_request, tran_status_code, order_data, dlvy_date, evaluation
+	  									FROM transaction WHERE buyer_id=#{buyerId} ORDER BY tran_no) inner_table
+						WHERE ROWNUM &lt;= #{search.endRowNum} )
+		WHERE row_seq BETWEEN #{search.startRowNum} AND #{search.endRowNum} 
+	 </select>
+	 
+	 <select  id="getTotalCount"  parameterType="java.util.Map"	 resultType="int">
+	  	SELECT COUNT(*)
+	  	FROM(	SELECT tran_no , prod_no, buyer_id, payment_option , receiver_name, receiver_phone, demailaddr, dlvy_request, tran_status_code, order_data, dlvy_date
+						FROM transaction WHERE buyer_id=#{buyerId} order by order_data) countTable						
+	 </select>
+	 
+</mapper>
